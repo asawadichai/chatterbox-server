@@ -12,11 +12,10 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 var results = [];
-var testMessage = JSON.stringify({results: []});
+var testMessage = JSON.stringify({results: results});
 
 var requestHandler = function(request, response) {
 
-  //console.log(request, response);
   // Request and Response come from node's http module.
   //
   // They include information about both the incoming request, such as
@@ -32,8 +31,6 @@ var requestHandler = function(request, response) {
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
-
-
 
   // The outgoing status.
   var statusCode = [200, 201];
@@ -57,13 +54,22 @@ var requestHandler = function(request, response) {
   // up in the browser.
   //
   if (request.method === 'POST') {
-    console.log('post request', request.addListener('data', (message) => response.end(message)));
+    var data = '';
+    request.on('data', chunk => {
+      data += chunk;
+    });
+    request.on('end', () => {
+      results.push(JSON.parse(data));
+    });
+
     response.writeHead(statusCode[1], headers);
-    response.end(request._postData);
+    response.end(JSON.parse(data));
+
+    console.log(results);
   }
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
-  response.end(testMessage);
+  response.end(JSON.stringify(results[0]));
 };
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
