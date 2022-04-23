@@ -24,7 +24,7 @@ var Parse = {
     $.ajax({
       url: Parse.server,
       type: 'GET',
-      data: { order: '-createdAt' },
+      data: { classes: 'messages' },
       contentType: 'application/json',
       success: successCB,
       error: errorCB || function(error) {
