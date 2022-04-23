@@ -46,17 +46,18 @@ var requestHandler = function(request, response) {
   }
 
   if (request.method === 'GET') {
-    if (url === '/classes/messages') {
+    if (url === '/') {
       // .writeHead() writes to the request line and headers of the response,
       // which includes the status and all headers.
       response.writeHead(200, headers);
       response.end(JSON.stringify(messages));
-    }
-    else if (url === '/?classes=messages') {
+    } else if (url === '/classes/messages') {
       response.writeHead(200, headers);
       response.end(JSON.stringify(messages));
-    }
-    else {
+    } else if (url === '/?order=-createdAt') {
+      response.writeHead(200, headers);
+      response.end(JSON.stringify(messages));
+    } else {
       response.writeHead(404);
       response.end();
     }
@@ -69,9 +70,9 @@ var requestHandler = function(request, response) {
     });
     request.on('end', () => {
       messages.results.push(JSON.parse(data));
-      response.end();
+      response.writeHead(201, headers);
+      response.end(JSON.stringify(messages.results));
     });
-    response.writeHead(201, headers);
   }
   // Make sure to always call response.end() - Node may not send
   // anything back to the client until you do. The string you pass to

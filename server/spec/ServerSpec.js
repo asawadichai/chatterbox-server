@@ -51,7 +51,8 @@ describe('Node Server Request Listener Function', function() {
   it('Should accept posts to /classes/messages', function() {
     var stubMsg = {
       username: 'Jono',
-      text: 'Do my bidding!'
+      text: 'Do my bidding!',
+      roomname: 'lobby'
     };
     var req = new stubs.request('/classes/messages', 'POST', stubMsg);
     var res = new stubs.response();
@@ -63,14 +64,15 @@ describe('Node Server Request Listener Function', function() {
 
     // Testing for a newline isn't a valid test
     // TODO: Replace with with a valid test
-    // expect(res._data).to.equal(JSON.stringify('\n'));
+    expect(res._data).to.equal(JSON.stringify([stubMsg]));
     expect(res._ended).to.equal(true);
   });
 
   it('Should respond with messages that were previously posted', function() {
     var stubMsg = {
       username: 'Jono',
-      text: 'Do my bidding!'
+      text: 'Do my bidding!',
+      roomname: 'lobby'
     };
     var req = new stubs.request('/classes/messages', 'POST', stubMsg);
     var res = new stubs.response();
@@ -100,6 +102,65 @@ describe('Node Server Request Listener Function', function() {
     handler.requestHandler(req, res);
 
     expect(res._responseCode).to.equal(404);
+    expect(res._ended).to.equal(true);
+  });
+
+  // Handle OPTIONS request
+  it('Should answer OPTIONS request with 200 status code', function() {
+    var req = new stubs.request('/classes/messages', 'OPTIONS');
+    var res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    expect(res._responseCode).to.equal(200);
+    expect(res._ended).to.equal(true);
+  });
+
+  it('Should answer OPTIONS request with appropriate methods', function() {
+    var req = new stubs.request('/classes/messages', 'OPTIONS');
+    var res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    expect(res._headers['access-control-allow-methods']).to.equal('GET, POST, PUT, DELETE, OPTIONS');
+    expect(res._ended).to.equal(true);
+  });
+
+  // Default route
+  it('Should answer GET request for / with 200 status code', function() {
+    var req = new stubs.request('/', 'GET');
+    var res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    expect(res._responseCode).to.equal(200);
+    expect(res._ended).to.equal(true);
+  });
+
+  // Handle Chatterbox client requests
+  it('Should answer GET request for /?orders=-createdAt with 200 status code', function() {
+    var req = new stubs.request('/?order=-createdAt', 'GET');
+    var res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    expect(res._responseCode).to.equal(200);
+    expect(res._ended).to.equal(true);
+  });
+
+  //  Messages from chatterbox server should contain a roomname
+  it('Chatterbox messages should contain a roomname key', function() {
+    var req = new stubs.request('/?order=-createdAt', 'GET');
+    var res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    expect(res._responseCode).to.equal(200);
+
+    var messages = JSON.parse(res._data).results;
+    expect(messages.length).to.be.above(0);
+    expect(messages[0].roomname).to.equal('lobby');
+
     expect(res._ended).to.equal(true);
   });
 
